@@ -1,16 +1,18 @@
+import LinearAlgebra
+
 function sigmoid(x::Array{Float64,1})
-    return 1.0 ./ (1.0 .+ exp.(-x));
+    return 1.0 ./ (1.0 .+ exp.(-x))
 end
 
 function gaussian(x::Array{Float64,1})
-    return exp.(-(x .^ 2));
+    return exp.(-(x .^ 2))
 end
 
-struct AbstractNeuron
+struct AbstractNeuron{T <: Real}
     g::Function
 end
 
-struct RBF_neuron{T <: Real} <: AbstractNeuron
+struct RBF_neuron{T <: Real} <: AbstractNeuron{T}
     a::Vector{T}
     b::T
     act_fcn::Function
