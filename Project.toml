@@ -3,6 +3,9 @@ uuid = "65882ee9-c20b-42f4-8d48-0aef461330a8"
 authors = ["Sergio Mauricio Vanegas Arias"]
 version = "1.0.0-DEV"
 
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
 [compat]
 julia = "1"
 

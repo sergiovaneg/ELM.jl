@@ -8,9 +8,7 @@ function gaussian(x::Array{Float64,1})
     return exp.(-(x .^ 2))
 end
 
-struct AbstractNeuron{T <: Real}
-    g::Function
-end
+abstract type AbstractNeuron{T <: Real} end
 
 struct RBF_neuron{T <: Real} <: AbstractNeuron{T}
     a::Vector{T}
