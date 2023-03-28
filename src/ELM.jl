@@ -1,6 +1,6 @@
 module ELM
 
-export network
+export Network
 include("network.jl")
 
 end
