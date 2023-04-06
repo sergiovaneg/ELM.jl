@@ -1,6 +1,6 @@
 module ELM
 
-export Network
-include("network.jl")
+export ELM_regressor
+include("networks.jl")
 
 end
