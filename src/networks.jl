@@ -112,7 +112,7 @@ function denormalize_output(self::ELM_regressor{T}, Y_::Matrix{T}) where T<:Real
     return Y;
 end
 
-function HL_init!(self::ELM_regressor, X::NTuple{N,Matrix{T}}, Y::NTuple{N,Matrix{T}}, neuron_type::Type{<:AbstractNeuron{T}}) where {N, T<:Real}
+function HL_init!(self::ELM_regressor, X::NTuple{N,Matrix{T}}, Y::NTuple{N,Matrix{T}}, neuron_type::Type{<:AbstractNeuron{T}} = RBF_neuron) where {N, T<:Real}
     X_ = vcat(X...);
     for pair ∈ self.fb_map
         X_[:, pair[1]] = self.output_transform.(X_[:, pair[1]]);
@@ -145,4 +145,29 @@ function HL_init!(self::ELM_regressor, X::NTuple{N,Matrix{T}}, Y::NTuple{N,Matri
 
     self.m = size(Y_, 2);
     self.beta = zeros(self.L+1, self.m);
+end
+
+function fit!(self::ELM_regressor, X::NTuple{N,Matrix{T}}, Y::NTuple{N,Matrix{T}}, Lambda::T = 1e18, Epsilon::T = 1e-9) where {N, T<:Real}
+    if isempty(self.G)
+        HL_init!(self, X, Y);
+    end
+
+    X_norm_delay = [self.apply_delay(self.normalize_input(X_single)) for X_single in X];
+    Y_norm = [self.normalize_output(Y_single) for Y_single in Y];
+
+    if isempty(self.P)
+        H_0 = LinearAlgebra.UniformScaling(Epsilon);
+        Y_0 = zeros(T, self.L + 1, self.m);
+
+        self.P = inv(LinearAlgebra.UniformScaling(1/Lambda) + H_0' * H_0);
+        self.beta = (LinearAlgebra.UniformScaling(1/Lambda) + H_0' * H_0) \ (H_0' * Y_0);
+    end
+
+    H = [hcat([G(X_norm_delay_single) for G in self.G]..., ones(T, size(X, 1), 1)) for X_norm_delay_single in X_norm_delay];
+    for (H_single, Y_norm_single) in zip(H, Y_norm)
+        self.P -= self.P * H_single' * ((LinearAlgebra.I + H_single * self.P * H_single') \ (H_single * self.P));
+        self.beta += self.P * H_single' * (Y_norm_single - H_single * self.beta);
+    end
+
+    return self;
 end
