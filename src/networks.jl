@@ -13,7 +13,7 @@ mutable struct ELM_regressor{T<:Real}
 
     input_delays::Tuple{Integer, Vararg{Integer}}
     fb_delays::Tuple{Vararg{Integer}}
-    offset::Int
+    offset::Integer
 
     G::Vector{AbstractNeuron{T}}
     act_fcn::Function
@@ -29,31 +29,34 @@ mutable struct ELM_regressor{T<:Real}
     output_bias::Vector{T}
     output_scale::Vector{T}
 
-    function ELM_regressor{T}(L::Int, input_vars::Tuple{String, Vararg{String}},
-        output_vars::Tuple{String, Vararg{String}}; input_delays::Tuple{Integer, Vararg{Integer}} = (0,),
-        fb_delays::Tuple{Vararg{Integer}} = Tuple{}(), act_fcn::Function = (x::T -> x), 
+    function ELM_regressor{T}(L::Int,
+        input_vars::Tuple{String, Vararg{String}},
+        output_vars::Tuple{String, Vararg{String}};
+        input_delays::Tuple{Integer, Vararg{Integer}} = (0,),
+        fb_delays::Tuple{Vararg{Integer}} = (1,),
+        act_fcn::Function = (x::T -> x), 
         output_transform::Function = (x::T -> x), 
         inv_output_transform::Function = (x::T -> x)) where T<:Real
 
-        fb_map = [];
+        fb_map = Array{Tuple{Integer, Integer},1}(undef, 0);
         for var_idx ∈ eachindex(output_vars)
-            if !(output_vars[var_idx] ∈ self.input_vars)
+            if !(output_vars[var_idx] ∈ input_vars)
                 continue;
             end
             
-            append!(fb_map, (var_idx, findfirst(isequal(output_vars[var_idx]), self.input_vars)));
+            push!(fb_map, (var_idx, findfirst(isequal(output_vars[var_idx]), input_vars)));
         end
 
-        offset = Set(input_vars) ∩ Set(output_vars) == ∅ ? max(input_delays) : max(vcat(input_delays, fb_delays));
+        offset = isempty(Set(input_vars) ∩ Set(output_vars)) ? max(input_delays...) : max(input_delays..., fb_delays...);
 
         G = Vector{AbstractNeuron{T}}();
-        beta = Vector{T}();
-        P = Matrix{T}();
+        beta = Vector{T}(undef, 0);
+        P = Matrix{T}(undef, 0, 0);
 
-        input_bias = Vector{T}();
-        input_scale = Vector{T}();
-        output_bias = Vector{T}();
-        output_scale = Vector{T}();
+        input_bias = Vector{T}(undef, 0);
+        input_scale = Vector{T}(undef, 0);
+        output_bias = Vector{T}(undef, 0);
+        output_scale = Vector{T}(undef, 0);
 
         new(-1, L, -1, input_vars, output_vars, fb_map, input_delays, fb_delays, offset, G, act_fcn, beta,
             P, output_transform, inv_output_transform, input_bias, input_scale, output_bias, output_scale);
