@@ -17,24 +17,19 @@ struct RBF_neuron{T<:Real} <: AbstractNeuron{T}
     act_fcn::Function
 
     function RBF_neuron{T}(d::Integer, Mu::Vector{T} = [], Sigma::Vector{T} = [], act_fcn::Function = sigmoid) where T<:Real
-        a = Vector{T}(undef, d);
         if isempty(Mu) || isempty(Sigma)
-            Random.rand!(a);
-            a .*= 2.;
-            a .-= 1;
+            a = 2. .* rand(T, d) .- 1.;
         else
-            Random.randn!(a);
-            a *= Sigma;
-            a += Mu;
+            a = Sigma .* randn(T, d) .+ Mu;
         end
 
-        b = 2 * Random.rand(T) - 1;
+        b = Random.rand(T);
 
         new(a, b, act_fcn);
     end 
 end
 
-function (neuron::RBF_neuron)(x::Vector{T}) where T<:Real
+function (neuron::RBF_neuron)(x::AbstractVector{T}) where T<:Real
     return neuron.act_fcn(neuron.b * LinearAlgebra.norm(x - neuron.a));
 end
 
@@ -44,23 +39,18 @@ struct ADD_neuron{T<:Real} <: AbstractNeuron{T}
     act_fcn::Function
 
     function ADD_neuron{T}(d::Integer, Mu::Vector{T} = [], Sigma::Vector{T} = [], act_fcn::Function = sigmoid) where T<:Real
-        a = Vector{T}(undef, d);
         if isempty(Mu) || isempty(Sigma)
-            Random.rand!(a);
-            a .*= 2.;
-            a .-= 1;
+            a = 2. .* rand(Float64, d) .- 1.;
         else
-            Random.randn!(a);
-            a *= Sigma;
-            a += Mu;
+            a = Sigma .* randn(T, d) .+ Mu;
         end
 
-        b = 2 * Random.rand(T) - 1;
+        b = 2. * Random.rand(T) - 1.;
         
         new(a, b, act_fcn);
     end
 end
 
-function (neuron::ADD_neuron)(x::Vector{T}) where T<:Real
+function (neuron::ADD_neuron)(x::AbstractVector{T}) where T<:Real
     return neuron.act_fcn(LinearAlgebra.dot(x, a) + b);
 end
